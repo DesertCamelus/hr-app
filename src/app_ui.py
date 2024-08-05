@@ -7,6 +7,8 @@ RTL_ANCHOR = "e"
 COLUMNS_NAMES = ("Status", "Salary", "Department", "Name", "ID")
 COLUMNS_TEXTS = {"ID": "מספר זהות", "Name": "שם", "Department": "מחלקה", "Salary": "שכר", "Status": "סטטוס"}
 SEARCH_FIELDS = ("מחלקה", "שם", "מספר זהות")
+TOTAL_FIELDS = 5  # update when a field is added / removed
+SEARCH_FIELDS_DELTA = TOTAL_FIELDS - len(SEARCH_FIELDS)
 
 
 class HRApp:
@@ -145,7 +147,7 @@ class HRApp:
         search_field = self.search_field_var.get()
         if search_query and search_query != PLACEHOLDER_TXT:
             if search_field in SEARCH_FIELDS:
-                search_field_index = SEARCH_FIELDS.index(search_field)
+                search_field_index = SEARCH_FIELDS.index(search_field) + SEARCH_FIELDS_DELTA
                 filtered_data = [row for row in self.data if search_query.lower() in row[search_field_index].lower()]
                 if filtered_data:
                     self.display_results(filtered_data)
