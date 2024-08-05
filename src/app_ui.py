@@ -13,7 +13,7 @@ class HRApp:
     def __init__(self, root):
         self.root = root
         self.root.title(APP_NAME)
-        self.root.geometry("800x800")
+        self.root.geometry("900x800")
         # Sample data
         self.data = [
             ('Active', '5000', 'מכירות', 'יוסי כהן', '999999999'),
@@ -46,16 +46,20 @@ class HRApp:
         self.search_entry.pack(side='right', padx=20)
         # Search Button
         self.search_button = ttk.Button(self.search_frame, text="🔍", command=self.search, width=3, cursor="hand2")
-        self.search_button.pack(side='left', padx=10)
+        self.search_button.pack(side='right', padx=10)
+        # Clear Selections Button with Eraser Symbol
+        self.clear_selections_button = ttk.Button(self.search_frame, text="🧹", command=self.clear_selections, width=3,
+                                                  cursor="hand2")
+        self.clear_selections_button.pack(side='right', padx=10)
         # Add Employee Button
         self.add_employee_button = ttk.Button(self.search_frame, text="הוסיפי עובד/ת / מועמד/ת",
                                               command=self.add_employee,
                                               width=17, cursor="hand2")
-        self.add_employee_button.pack(side='left', padx=10)
+        self.add_employee_button.pack(side='right', padx=10)
 
         # Image Placeholder
         self.image_placeholder = tk.Label(self.root, text="Image Placeholder", bg='gray', width=20, height=10)
-        self.image_placeholder.pack(pady=10)
+        self.image_placeholder.pack(pady=30)
 
         # Edit Button Frame
         self.edit_button_frame = tk.Frame(self.root, pady=5)
@@ -72,7 +76,7 @@ class HRApp:
         self.results_tree = ttk.Treeview(self.results_frame, columns=COLUMNS_NAMES, show='headings')
         self.configure_columns()
         self.configure_headings()
-        self.results_tree.pack(fill='both', expand=True)
+        self.results_tree.pack(side='left', fill='both', expand=True)
         # Scrollbar for Treeview
         self.scrollbar = ttk.Scrollbar(self.results_frame, orient="vertical", command=self.results_tree.yview)
         self.results_tree.configure(yscroll=self.scrollbar.set)
@@ -80,16 +84,20 @@ class HRApp:
 
         # Documents Frame
         self.docs_frame = tk.Frame(self.root)
-        self.docs_frame.pack(fill='both', expand=True, pady=15)
+        # Initially hide the documents frame
+        self.docs_frame.pack_forget()
 
-        # Add Document Button
-        self.add_doc_button = ttk.Button(self.docs_frame, text="+", command=self.add_document, width=3, cursor="hand2",
-                                         state='disabled')
-        self.add_doc_button.pack(padx=5)
-        # Remove Document Button
-        self.remove_doc_button = ttk.Button(self.docs_frame, text="-", command=self.remove_document, width=3,
+        # Ensure the + and - buttons are correctly packed within the docs_button_frame
+        self.docs_button_frame = tk.Frame(self.docs_frame)
+        self.docs_button_frame.pack(side='top', anchor='w', padx=5, pady=5)
+
+        self.add_doc_button = ttk.Button(self.docs_button_frame, text="+", command=self.add_document, width=3,
+                                         cursor="hand2", state='disabled')
+        self.remove_doc_button = ttk.Button(self.docs_button_frame, text="-", command=self.remove_document, width=3,
                                             cursor="hand2", state='disabled')
-        self.remove_doc_button.pack(padx=5)
+
+        self.add_doc_button.pack(side='left', padx=5)
+        self.remove_doc_button.pack(side='left', padx=5)
 
         # Treeview for Documents
         self.docs_tree = ttk.Treeview(self.docs_frame, columns=("DocName", "DocType"), show='headings')
@@ -134,10 +142,19 @@ class HRApp:
 
     def search(self):
         search_query = self.search_var.get().strip()
-        search_field_index = SEARCH_FIELDS.index(self.search_field_var.get())
+        search_field = self.search_field_var.get()
         if search_query and search_query != PLACEHOLDER_TXT:
-            filtered_data = [row for row in self.data if search_query.lower() in row[search_field_index + 1].lower()]
-            self.display_results(filtered_data)
+            if search_field in SEARCH_FIELDS:
+                search_field_index = SEARCH_FIELDS.index(search_field)
+                filtered_data = [row for row in self.data if search_query.lower() in row[search_field_index].lower()]
+                if filtered_data:
+                    self.display_results(filtered_data)
+                else:
+                    messagebox.showinfo("תוצאה", "לא נמצאו רשומות")
+            else:
+                self.display_results(self.data)
+        else:
+            self.display_results(self.data)
 
     def display_results(self, results):
         for row in self.results_tree.get_children():
@@ -165,9 +182,13 @@ class HRApp:
             self.add_doc_button.config(state='normal')
             # Enable edit employee button
             self.edit_employee_button.config(state='normal')
+            # Show documents frame
+            self.docs_frame.pack(fill='both', expand=True, pady=15)
         else:
             # Disable edit employee button if no employee is selected
             self.edit_employee_button.config(state='disabled')
+            # Hide documents frame
+            self.docs_frame.pack_forget()
 
     def on_doc_double_click(self, event):
         selected_item = self.docs_tree.selection()
@@ -189,13 +210,16 @@ class HRApp:
                 'ID': id_entry.get(),
                 'Name': name_entry.get(),
                 'Department': dept_entry.get(),
-                'Salary': salary_entry.get()
+                'Salary': salary_entry.get(),
+                'Status': status_entry.get()
             }
             if not new_employee['ID'] or not new_employee['Name']:
                 messagebox.showerror("Error", "ID and Name are mandatory")
                 return
             self.data.append(
-                (new_employee['Salary'], new_employee['Department'], new_employee['Name'], new_employee['ID']))
+                (new_employee['Status'], new_employee['Salary'], new_employee['Department'], new_employee['Name'],
+                 new_employee['ID'])
+            )
             self.display_results(self.data)
             add_window.destroy()
 
@@ -219,7 +243,12 @@ class HRApp:
         salary_entry = tk.Entry(add_window)
         salary_entry.pack(pady=5)
 
-        tk.Button(add_window, text="Save", command=save_new_employee).pack(pady=10)
+        tk.Label(add_window, text="Status:").pack(pady=5)
+        status_entry = tk.Entry(add_window)
+        status_entry.pack(pady=5)
+
+        save_button = tk.Button(add_window, text="Save", command=save_new_employee, bg="#00FF00")
+        save_button.pack(pady=10)
 
     def edit_employee(self):
         if not hasattr(self, 'selected_data'):
@@ -269,6 +298,24 @@ class HRApp:
             if confirm:
                 self.docs_tree.delete(selected_item)
                 self.remove_doc_button.config(state='disabled')
+
+    # Implement clear_selections method
+    def clear_selections(self):
+        # Clear selections in results_tree and docs_tree
+        self.results_tree.selection_remove(self.results_tree.selection())
+        self.docs_tree.selection_remove(self.docs_tree.selection())
+        # Clear all items in docs_tree
+        for row in self.docs_tree.get_children():
+            self.docs_tree.delete(row)
+        # Disable buttons that depend on selections
+        self.edit_employee_button.config(state='disabled')
+        self.add_doc_button.config(state='disabled')
+        self.remove_doc_button.config(state='disabled')
+        # Reset search input to placeholder text
+        self.search_var.set("")
+        self.set_placeholder(None)
+        # Display all data
+        self.display_results(self.data)
 
 
 if __name__ == "__main__":
