@@ -7,8 +7,6 @@ RTL_ANCHOR = "e"
 COLUMNS_NAMES = ("Status", "Salary", "Department", "Name", "ID")
 COLUMNS_TEXTS = {"ID": "מספר זהות", "Name": "שם", "Department": "מחלקה", "Salary": "שכר", "Status": "סטטוס"}
 SEARCH_FIELDS = ("מחלקה", "שם", "מספר זהות")
-TOTAL_FIELDS = 5  # update when a field is added / removed
-SEARCH_FIELDS_DELTA = TOTAL_FIELDS - len(SEARCH_FIELDS)
 
 
 class HRApp:
@@ -32,11 +30,10 @@ class HRApp:
         # Search Frame
         self.search_frame = tk.Frame(self.root, bg='#f0f0f0', pady=10)
         self.search_frame.pack(fill='x')
-        # Search Field Combo Box
+
+        # Search Field
         self.search_field_var = tk.StringVar(value=SEARCH_FIELDS[2])
-        self.search_field_combo = ttk.Combobox(self.search_frame, textvariable=self.search_field_var,
-                                               values=SEARCH_FIELDS, state='readonly', width=10, justify='center')
-        self.search_field_combo.pack(side='right', padx=5)
+
         # Search Entry
         self.search_var = tk.StringVar()
         self.search_entry = ttk.Entry(self.search_frame, textvariable=self.search_var, font=('Helvetica italic', 14),
@@ -144,17 +141,15 @@ class HRApp:
 
     def search(self):
         search_query = self.search_var.get().strip()
-        search_field = self.search_field_var.get()
         if search_query and search_query != PLACEHOLDER_TXT:
-            if search_field in SEARCH_FIELDS:
-                search_field_index = SEARCH_FIELDS.index(search_field) + SEARCH_FIELDS_DELTA
-                filtered_data = [row for row in self.data if search_query.lower() in row[search_field_index].lower()]
-                if filtered_data:
-                    self.display_results(filtered_data)
-                else:
-                    messagebox.showinfo("תוצאה", "לא נמצאו רשומות")
+            filtered_data = [
+                row for row in self.data
+                if any(search_query.lower() in str(row[i]).lower() for i in range(len(COLUMNS_NAMES)))
+            ]
+            if filtered_data:
+                self.display_results(filtered_data)
             else:
-                self.display_results(self.data)
+                messagebox.showinfo("תוצאה", "לא נמצאו רשומות")
         else:
             self.display_results(self.data)
 
